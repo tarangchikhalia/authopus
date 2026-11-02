@@ -1,0 +1,9 @@
+{
+  "outcome": "ERROR",
+  "error": {
+    "code": "AUDIT_UNAVAILABLE",
+    "message": "Required audit persistence unavailable",
+    "correlation_id": "req-001",
+    "retryable": true
+  }
+}

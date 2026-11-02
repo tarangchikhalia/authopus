@@ -1,0 +1,8 @@
+{
+  "decision_id": "33333333-3333-4333-8333-333333333333",
+  "outcome": "APPROVAL_REQUIRED",
+  "reason_code": "APPROVAL_POLICY",
+  "policy_version": "git:abc123",
+  "evaluated_at": "2026-11-09T14:00:02Z",
+  "approval_id": "44444444-4444-4444-8444-444444444444"
+}

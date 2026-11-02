@@ -1,0 +1,26 @@
+{
+  "agent": {
+    "id": "agent-research-01",
+    "issuer": "https://issuer.example.test"
+  },
+  "agent_identity": {
+    "method": "integration_assertion"
+  },
+  "authority": {
+    "authority_mode": "delegated",
+    "principal": {
+      "id": "user-123",
+      "issuer": "https://issuer.example.test"
+    },
+    "delegation_token": "<SIGNED_DELEGATION_JWT_FROM_TRUSTED_ISSUER>"
+  },
+  "action": "tools/call:read_document",
+  "resource": {
+    "type": "mcp_tool",
+    "id": "documents/read_document"
+  },
+  "context": {
+    "environment": "dev"
+  },
+  "request_id": "req-001"
+}
