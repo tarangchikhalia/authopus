@@ -19,6 +19,24 @@ jobs:
           cache: false
       - name: Check formatting
         run: make fmt-check
+      - name: Verify formatting failures are rejected
+        run: |
+          fixture=$(mktemp -d)
+          trap 'rm -rf "$fixture"' EXIT
+          cp Makefile "$fixture/"
+          mkdir "$fixture/cmd" "$fixture/internal"
+          printf 'package fixture\n\nfunc value()int{return 1}\n' > "$fixture/fixture.go"
+          if make -C "$fixture" fmt-check; then
+            echo "fmt-check accepted an unformatted root Go file"
+            exit 1
+          fi
+          gofmt -w "$fixture/fixture.go"
+          make -C "$fixture" fmt-check
+          printf 'package fixture\nfunc broken(\n' > "$fixture/fixture.go"
+          if make -C "$fixture" fmt-check; then
+            echo "fmt-check ignored a gofmt error"
+            exit 1
+          fi
       - name: Vet
         run: make vet
       - name: Test
@@ -29,3 +47,8 @@ jobs:
         run: |
           test "$(./bin/authopus)" = "Hello World!"
           test "$(./bin/authopusctl)" = "Hello World!"
+      - name: Build and smoke test Docker image
+        run: |
+          docker build -t authopus:ci .
+          output=$(docker run --rm authopus:ci)
+          test "$output" = "Hello World!"
