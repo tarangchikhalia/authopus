@@ -11,7 +11,11 @@ vet:
 	go vet ./...
 
 fmt-check:
-	@test -z "$$(gofmt -l $$(find cmd internal -name '*.go'))" || (echo "Go files need gofmt"; exit 1)
+	@unformatted=$$(gofmt -l .) || exit $$?; \
+	if [ -n "$$unformatted" ]; then \
+		printf 'Go files need gofmt:\n%s\n' "$$unformatted"; \
+		exit 1; \
+	fi
 
 clean:
 	rm -rf bin

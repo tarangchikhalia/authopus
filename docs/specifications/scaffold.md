@@ -14,14 +14,14 @@ Authopus is a **single Go module** (see `go.mod`) and a **modular monolith** (AD
 go run ./cmd/authopus       # Hello World!
 go run ./cmd/authopusctl    # Hello World!
 make build                  # builds bin/authopus and bin/authopusctl
-make fmt-check              # validates gofmt formatting
+make fmt-check              # validates all Go files; fails on gofmt errors
 make vet                    # static analysis
 make test                   # go test ./...
 docker build -t authopus:dev .
 docker run --rm authopus:dev
 ```
 
-Configuration: **none yet**. Both commands are deterministic Hello World placeholders and do not open listeners, connect to PostgreSQL, or read secrets. Do not deploy this milestone as a functioning security gateway. CI runs formatting, vet, tests, build, and executable smoke checks on pushes and pull requests.
+Configuration: **none yet**. Both commands are deterministic Hello World placeholders and do not open listeners, connect to PostgreSQL, or read secrets. Do not deploy this milestone as a functioning security gateway. CI runs formatting, vet, tests, build, executable smoke checks, formatting regression checks, and a Docker image build/run check on pushes and pull requests.
 
 ## Planned package boundaries
 
