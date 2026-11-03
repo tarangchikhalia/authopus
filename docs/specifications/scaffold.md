@@ -4,7 +4,7 @@ Authopus is a **single Go module** (see `go.mod`) and a **modular monolith** (AD
 
 ## Requirements
 
-- Go 1.23 or newer compatible Go toolchain
+- Go 1.27.3 (the version declared in `go.mod` and used by CI)
 - Make for convenience targets
 - Docker for an optional image build
 
