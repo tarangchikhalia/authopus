@@ -1,7 +1,7 @@
 # Authopus — System Architecture
 
-**Release:** `v0.1.0` (experimental)  
-**Status:** Architecture baseline (A02), updated to reflect A03–A07  
+**Release:** `v0.1.0`
+**Status:** Architecture baseline 
 **Date:** November 2, 2026  
 **Deployment model:** Single organization; one Go service and PostgreSQL
 
@@ -246,3 +246,14 @@ Not included in `v0.1.0`: microservices, multi-tenant isolation, Kubernetes/HA, 
 - [ ] Automated tests demonstrate security invariants end to end.
 - [ ] Full Go build and Docker Compose integration pass in CI.
 - [ ] Architecture document committed to the Authopus repository.
+
+## 15. Related artifacts
+
+- `A01-release-scope.md` — release boundaries and gates.
+- `authopus-a03/openapi.yaml` and `authopus-a03/contract-tests.md` — API contract and tests.
+- A04 policy format decisions — schema version, multi-rule document, precedence and compatibility.
+- `identity-and-delegation.md` — A05 trust model and signed delegation requirements.
+- `authopus-a06-go-scaffold.zip` — initial Go project scaffold.
+- `authopus-a07-implementation.zip` — Compose, PostgreSQL, goose and operational foundation.
+
+**Document authority:** Confirmed A01–A07 decisions are normative; examples and open implementation details must be refined without weakening the stated security invariants.
