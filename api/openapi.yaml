@@ -1,0 +1,552 @@
+openapi: 3.1.0
+info:
+  title: Authopus REST API
+  version: 0.1.0
+  description: 'Experimental v0.1.0 contract, reconciled with A05 identity/delegation. Single organization; MCP
+    tool calls only. Four semantic outcomes: ALLOW, DENY, APPROVAL_REQUIRED (HTTP 200), ERROR (non-2xx). Critical
+    audit failures fail closed.'
+servers:
+- url: http://localhost:8080
+  description: Local Docker Compose; bind to loopback or place behind TLS for nonlocal use.
+tags:
+- name: Authorization
+- name: Approvals
+- name: Operations
+paths:
+  /v1/authorize:
+    post:
+      summary: Evaluate an authorization request
+      security:
+      - integrationBearer: []
+      responses:
+        '200':
+          description: 'Valid evaluation: ALLOW, DENY, or APPROVAL_REQUIRED.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        '400': &id001
+          description: 'Error: no tool execution permitted.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401': *id001
+        '403': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeRequest'
+      description: Trusted OIDC-authenticated integrations only. Verify agent OIDC proof or caller authorization
+        to assert the agent; verify explicit delegated/self authority, principal binding, scopes and trusted context.
+        Signed delegation proof is mandatory for delegated actions; a grant reference alone is invalid. Authentication/validation
+        errors return non-2xx ERROR. Persist critical audit evidence before allowing execution; 503 ERROR on required
+        audit failure. ALLOW does not prove downstream execution.
+      tags:
+      - Authorization
+      operationId: post_v1_authorize
+  /v1/decisions/{id}:
+    get:
+      summary: Retrieve a single recorded decision
+      security:
+      - integrationBearer: []
+      responses:
+        '200':
+          description: Recorded decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        '400': *id001
+        '401': *id001
+        '403': *id001
+        '404': *id001
+        '500': *id001
+        '503': *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      description: Only decisions within the authenticated integration’s permitted scope are accessible; no search
+        endpoint in v0.1.0.
+      tags:
+      - Authorization
+      operationId: get_v1_decisions_id
+  /v1/approvals:
+    get:
+      summary: List approval requests
+      security:
+      - approverBearer: []
+      responses:
+        '200':
+          description: Approvals visible to the authenticated approver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalList'
+        '400': *id001
+        '401': *id001
+        '403': *id001
+        '500': *id001
+        '503': *id001
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - EXPIRED
+          - CONSUMED
+          default: PENDING
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      tags:
+      - Approvals
+      operationId: get_v1_approvals
+  /v1/approvals/{id}:
+    get:
+      summary: Retrieve an approval
+      security:
+      - approverBearer: []
+      responses:
+        '200':
+          description: Approval state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400': *id001
+        '401': *id001
+        '403': *id001
+        '500': *id001
+        '503': *id001
+        '404': *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - Approvals
+      operationId: get_v1_approvals_id
+  /v1/approvals/{id}/approve:
+    post:
+      summary: Approve a pending action once
+      security:
+      - approverBearer: []
+      responses:
+        '200':
+          description: Approval state updated; this does not execute the tool.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400': *id001
+        '401': *id001
+        '403': *id001
+        '500': *id001
+        '503': *id001
+        '404': *id001
+        '409': *id001
+        '410': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      description: An authorized approver records one-time approval. Enforcement must atomically consume approval
+        and revalidate identity, delegation, policy, resource, action, context and expiry immediately before executing
+        the exact approved action. Approval alone never forwards an MCP call.
+      tags:
+      - Approvals
+      operationId: post_v1_approvals_id_approve
+  /v1/approvals/{id}/reject:
+    post:
+      summary: Reject a pending action
+      security:
+      - approverBearer: []
+      responses:
+        '200':
+          description: Approval rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400': *id001
+        '401': *id001
+        '403': *id001
+        '500': *id001
+        '503': *id001
+        '404': *id001
+        '409': *id001
+        '410': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - Approvals
+      operationId: post_v1_approvals_id_reject
+  /healthz:
+    get:
+      summary: Liveness
+      security: []
+      responses:
+        '200':
+          description: Process alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      tags:
+      - Operations
+      operationId: get_healthz
+  /readyz:
+    get:
+      summary: Readiness
+      security: []
+      responses:
+        '200':
+          description: Ready to serve
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Dependencies unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      tags:
+      - Operations
+      operationId: get_readyz
+components:
+  securitySchemes:
+    integrationBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OIDC access token authenticating trusted integration caller; not by itself evidence of agent
+        identity or delegated authority.
+    approverBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Authenticated human approver token; authorization to review the specific approval is enforced.
+  schemas:
+    Actor:
+      description: Identity reference; id is the Keycloak subject. Omitted issuer resolves to the configured realm; supplied issuer must match exactly. Body fields alone are not identity evidence.
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        issuer:
+          type: string
+          maxLength: 512
+    Resource:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+          minLength: 1
+        id:
+          type: string
+          minLength: 1
+        attributes:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: 'null'
+            - type: array
+              items:
+                type: string
+    AuthorizeRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - agent
+      - agent_identity
+      - authority
+      - action
+      - resource
+      properties:
+        agent:
+          $ref: '#/components/schemas/Actor'
+        agent_identity:
+          $ref: '#/components/schemas/AgentIdentityProof'
+        authority:
+          oneOf:
+          - $ref: '#/components/schemas/DelegatedAuthority'
+          - $ref: '#/components/schemas/SelfAuthority'
+          discriminator:
+            propertyName: authority_mode
+            mapping:
+              delegated: '#/components/schemas/DelegatedAuthority'
+              self: '#/components/schemas/SelfAuthority'
+        action:
+          type: string
+          minLength: 1
+          maxLength: 256
+        resource:
+          $ref: '#/components/schemas/Resource'
+        context:
+          type: object
+          description: Typed attributes are untrusted unless independently verified or explicitly authorized for
+            this caller. Caller-provided roles, scopes or org never establish authority.
+          additionalProperties:
+            oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: 'null'
+        request_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+      description: Explicit authority discriminant prevents missing delegation from silently becoming self authority.
+    Decision:
+      type: object
+      additionalProperties: false
+      required:
+      - decision_id
+      - outcome
+      - reason_code
+      - policy_version
+      - evaluated_at
+      properties:
+        decision_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum:
+          - ALLOW
+          - DENY
+          - APPROVAL_REQUIRED
+        reason_code:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+        policy_version:
+          type: string
+          minLength: 1
+        evaluated_at:
+          type: string
+          format: date-time
+        approval_id:
+          type: string
+          format: uuid
+        correlation_id:
+          type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - outcome
+      - error
+      properties:
+        outcome:
+          type: string
+          const: ERROR
+        error:
+          type: object
+          additionalProperties: false
+          required:
+          - code
+          - message
+          - correlation_id
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            correlation_id:
+              type: string
+            retryable:
+              type: boolean
+        decision_id:
+          type: string
+          format: uuid
+    Approval:
+      type: object
+      additionalProperties: false
+      required:
+      - approval_id
+      - decision_id
+      - status
+      - created_at
+      - expires_at
+      properties:
+        approval_id:
+          type: string
+          format: uuid
+        decision_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - EXPIRED
+          - CONSUMED
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+        reviewed_by:
+          type: string
+        reason:
+          type: string
+    ApprovalList:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Approval'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+    Health:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - not_ready
+    AgentIdentityProof:
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - method
+        - oidc_token
+        properties:
+          method:
+            const: agent_oidc
+          oidc_token:
+            type: string
+            minLength: 1
+            description: Agent OIDC JWT, sensitive; never log or persist. Verify independently and bind iss/sub
+              to agent.
+      - type: object
+        additionalProperties: false
+        required:
+        - method
+        properties:
+          method:
+            const: integration_assertion
+          description:
+            type: string
+            maxLength: 256
+            description: Optional non-authoritative correlation note. Caller must be explicitly configured to assert
+              this agent identity.
+      description: Direct agent OIDC proof or explicitly authorized integration assertion; neither trusts agent.id
+        by itself.
+    DelegatedAuthority:
+      type: object
+      additionalProperties: false
+      required:
+      - authority_mode
+      - principal
+      - delegation_token
+      properties:
+        authority_mode:
+          const: delegated
+        principal:
+          $ref: '#/components/schemas/Actor'
+        delegation_token:
+          type: string
+          minLength: 1
+          description: Signed delegation token (compact JWS/JWT profile defined by A09). Must verify issuer, signature,
+            audience, validity, agent/principal binding, action/resource scope and organization. Sensitive; never
+            log or persist raw.
+    SelfAuthority:
+      type: object
+      additionalProperties: false
+      required:
+      - authority_mode
+      - principal
+      properties:
+        authority_mode:
+          const: self
+        principal:
+          $ref: '#/components/schemas/Actor'
+          description: Must equal verified agent/workload identity, or a configured identity mapping; not an arbitrary
+            claimed user.

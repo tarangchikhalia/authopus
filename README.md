@@ -83,6 +83,8 @@ flowchart TB
     class DB,PolicyFiles storage
 ```
 
+Refer to [architecture.md](./docs/architecture/architecuture.md) for more details
+
 ### Modules responsibility
 
 - Gate: Intercepts requests and enforces authorization decisions

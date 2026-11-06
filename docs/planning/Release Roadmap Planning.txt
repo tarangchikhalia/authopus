@@ -1,0 +1,88 @@
+As of A07, **the major architectural decisions for Authopus v0.1.0 are settled**. The remaining questions concern security semantics, integration behavior, implementation details, and release readiness.
+
+I would separate them into three categories.
+
+## 1. Open design questions
+
+These should be resolved before or during A08–A14.
+
+| Priority | Question | Why it matters | Target task |
+|---|---|---|---|
+| P0 | Which OIDC providers must be supported initially? | Determines discovery, JWKS validation, issuer configuration and interoperability tests | A08 |
+| P0 | How are trusted integrations authorized to assert agent identities? | Prevents an integration from impersonating arbitrary agents | A08 |
+| P0 | What is the exact signed delegation token format? | Establishes claims, issuer, audience, expiry and signature requirements | A09 |
+| P0 | How are delegation revocation and replay handled? | Determines whether an otherwise valid token remains usable after authority is withdrawn | A09 |
+| P0 | How is principal authority represented in trusted claims? | Prevents delegation scopes from being mistaken for actual principal permissions | A09 |
+| P0 | What are the complete A04 condition operators and type semantics? | Ensures deterministic policy evaluation across implementations | A10–A11 |
+| P0 | How are policy conflicts resolved across multiple YAML documents? | Must preserve global deny precedence regardless of file ordering | A11 |
+| P1 | What is the policy activation and rollback procedure? | Determines safe Git polling, validation and last-known-good behavior | A13 |
+
+The first five are the most important unresolved security decisions.
+
+## 2. Open integration and execution questions
+
+| Priority | Question | Target task |
+|---|---|---|
+| P0 | Which MCP transport modes are supported initially: stdio, Streamable HTTP, or both? | A16 |
+| P0 | How does the gateway authenticate upstream MCP servers? | A16 |
+| P0 | How are tool names and resource identifiers mapped into policy actions and resources? | A15–A16 |
+| P0 | How is trusted identity context propagated through the gateway without allowing spoofing? | A17 |
+| P0 | How are approval grants bound to the exact request and consumed atomically? | A19 |
+| P0 | What happens when the request changes between approval and execution? | A19 |
+| P0 | Which audit events must be persisted synchronously? | A20 |
+| P1 | How are sensitive tool arguments and identity claims redacted from audit records? | A20 |
+
+An important distinction is that a successful authorization decision is not proof that the downstream MCP tool executed successfully.
+
+## 3. Implementation and release questions
+
+These do not require reopening the architecture.
+
+| Question | Current status |
+|---|---|
+| Is the Go toolchain and dependency graph reproducible? | A06 full build remains unverified |
+| Does Docker Compose start successfully end to end? | A07 runtime verification pending |
+| Do goose migrations and rollback tests pass? | Pending |
+| Are A03 contract tests automated in CI? | Pending |
+| Are A04 policy schema examples validated by tests? | Pending |
+| Are A03–A07 artifacts committed to the repository? | Not confirmed |
+| Which open-source license will Authopus use? | Not finalized in the recorded decisions |
+| What are the minimum supported deployment requirements? | Not finalized |
+
+## 4. Recommended next decisions
+
+I would resolve the following in order:
+
+<box border radius="lg" padding={3} gap={3}>
+  <row align="start" gap={3}>
+    <icon name="shield-check" color="secondary" size="lg"/>
+    <box flex="1" gap={1}>
+      **A08 — OIDC trust configuration**
+
+      Supported issuer configuration, token validation rules, and trusted integration-to-agent identity binding.
+      <button size="sm" color="primary" variant="outline" block onClick={()=>GenUI.issueNewTurn("Let's define A08 OIDC Authentication for Authopus v0.1.0. Identify the essential design decisions and ask me to confirm them before implementation.")}>Define A08 <icon name="arrow-right" size="xs"/></button>
+    </box>
+  </row>
+  <divider color="subtle"/>
+  <row align="start" gap={3}>
+    <icon name="key-round" color="secondary" size="lg"/>
+    <box flex="1" gap={1}>
+      **A09 — Delegation token contract**
+
+      Signed token claims, authority binding, revocation, replay handling and expiration.
+      <button size="sm" variant="outline" color="secondary" block onClick={()=>GenUI.issueNewTurn("Let's define A09 Delegation Validation for Authopus v0.1.0, including token format, claim validation, revocation and replay semantics.")}>Define A09 <icon name="arrow-right" size="xs"/></button>
+    </box>
+  </row>
+  <divider color="subtle"/>
+  <row align="start" gap={3}>
+    <icon name="file-code" color="secondary" size="lg"/>
+    <box flex="1" gap={1}>
+      **A04 — Policy semantics verification**
+
+      Confirm that the delivered schema fully specifies operators, type checking, missing values and global precedence.
+      <button size="sm" variant="outline" color="secondary" block onClick={()=>GenUI.issueNewTurn("Audit the A04 Authopus policy specification for unresolved evaluation semantics and propose precise normative decisions.")}>Review A04 <icon name="arrow-right" size="xs"/></button>
+    </box>
+  </row>
+</box>
+
+**Overall assessment:** No fundamental architecture decision is blocking progress. The critical path is now establishing verifiable identity and delegation semantics, followed by deterministic policy evaluation and MCP enforcement.

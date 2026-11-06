@@ -1,0 +1,8 @@
+{
+  "decision_id": "22222222-2222-4222-8222-222222222222",
+  "outcome": "DENY",
+  "reason_code": "EXPLICIT_DENY",
+  "reason": "Tool not permitted",
+  "policy_version": "git:abc123",
+  "evaluated_at": "2026-11-09T14:00:01Z"
+}
