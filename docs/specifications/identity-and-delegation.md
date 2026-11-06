@@ -197,3 +197,7 @@ To resolve in A08/A09 rather than A05: exact JWT claim names, issuer allowlists,
 - [ ] A08/A09 security and contract tests implemented and passing when those roadmap tasks are completed.
 
 **A05 status:** Specification complete; repository review/commit and A03 reconciliation outstanding. This document does not claim implementation or CI verification.
+
+## Keycloak implementation contract (#11)
+
+See [Keycloak setup](keycloak-setup.md) for canonical subject IDs, explicit workload bindings, registered-agent assertion permissions, RFC 9068 requirements and lifecycle behavior. Human users remain managed by Keycloak without duplicate Authopus registration.

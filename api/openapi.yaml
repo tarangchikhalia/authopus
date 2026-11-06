@@ -275,6 +275,7 @@ components:
       description: Authenticated human approver token; authorization to review the specific approval is enforced.
   schemas:
     Actor:
+      description: Identity reference; id is the Keycloak subject. Omitted issuer resolves to the configured realm; supplied issuer must match exactly. Body fields alone are not identity evidence.
       type: object
       additionalProperties: false
       required:
